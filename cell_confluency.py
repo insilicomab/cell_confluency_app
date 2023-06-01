@@ -30,29 +30,28 @@ class CellConfluency:
         _, th = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         # configure the kernel
-        kernel = np.ones((5, 5), np.uint8)
+        kernel = np.ones((3, 3), np.uint8)
 
-        # morphological transformation(Dilation)
-        th_dilation = cv2.dilate(th, kernel, iterations=1)
+        # morphological transformation(Opening -> Dilation)
+        th = cv2.morphologyEx(th, cv2.MORPH_OPEN, kernel, iterations=1)
+        th = cv2.dilate(th, kernel, iterations=1)
 
         # contour extraction
-        contours, _ = cv2.findContours(
-            th_dilation, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
-        )
+        contours, _ = cv2.findContours(th, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
         # draw the contours on the source image
         image_contour = cv2.drawContours(image_rgb.copy(), contours, -1, (0, 255, 0), 2)
 
         # total number of pixels
-        whole_area = th_dilation.size
+        whole_area = th.size
 
         # number of zero area pixels
-        white_area = cv2.countNonZero(th_dilation)
+        white_area = cv2.countNonZero(th)
 
         # calculate confluency
         confluency = white_area / whole_area * 100
 
-        return confluency, image_contour, th_dilation
+        return confluency, image_contour, th
 
 
 # 画像を選択する関数
@@ -83,9 +82,19 @@ def display_original_image():
 def display_results():
     file_path = file_label.cget("text")
     cc = CellConfluency(file_path)
-    confluency, image_contour, _ = cc.run()
-    print(confluency)
-    print(image_contour)
+    confluency, image_contour, th = cc.run()
+    print(confluency, image_contour.shape)
+    # PillowのImageオブジェクトに変換
+    image_contour = Image.fromarray(image_contour)
+    w, h = image_contour.size
+    photo = ImageTk.PhotoImage(image_contour)
+    # サブウィンドウ
+    result_window = tkinter.Toplevel(root)
+    result_window.title("解析後")
+    result_window.geometry(f"{w}x{h}")
+    image_label = tkinter.Label(result_window, image=photo)
+    image_label.pack()
+    image_label.image = photo
 
 
 if __name__ == "__main__":
