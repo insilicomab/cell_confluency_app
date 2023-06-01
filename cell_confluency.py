@@ -1,12 +1,58 @@
 import tkinter
 import tkinter.filedialog
 
+import cv2
+import numpy as np
 from PIL import Image, ImageTk
 
 
 class CellConfluency:
-    def __init__(self, image_path) -> None:
+    def __init__(self, image_path: str) -> None:
         self._image_path = image_path
+        self._image_bgr = cv2.imread(image_path)
+
+    @property
+    def image_path(self):
+        return self._image_path
+
+    @property
+    def image_bgr(self):
+        return self._image_bgr
+
+    def run(self):
+        # BGR to RGB
+        image_rgb = cv2.cvtColor(self._image_bgr, cv2.COLOR_BGR2RGB)
+
+        # gray scale
+        image_gray = cv2.cvtColor(self._image_bgr, cv2.COLOR_BGR2GRAY)
+
+        # binarization using Otsu's method
+        _, th = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # configure the kernel
+        kernel = np.ones((5, 5), np.uint8)
+
+        # morphological transformation(Dilation)
+        th_dilation = cv2.dilate(th, kernel, iterations=1)
+
+        # contour extraction
+        contours, _ = cv2.findContours(
+            th_dilation, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
+        )
+
+        # draw the contours on the source image
+        image_contour = cv2.drawContours(image_rgb.copy(), contours, -1, (0, 255, 0), 2)
+
+        # total number of pixels
+        whole_area = th_dilation.size
+
+        # number of zero area pixels
+        white_area = cv2.countNonZero(th_dilation)
+
+        # calculate confluency
+        confluency = white_area / whole_area * 100
+
+        return confluency, image_contour, th_dilation
 
 
 # 画像を選択する関数
@@ -31,6 +77,15 @@ def display_original_image():
     image_label = tkinter.Label(original_image_window, image=photo)
     image_label.pack()
     image_label.image = photo
+
+
+# 解析結果を表示する関数
+def display_results():
+    file_path = file_label.cget("text")
+    cc = CellConfluency(file_path)
+    confluency, image_contour, _ = cc.run()
+    print(confluency)
+    print(image_contour)
 
 
 if __name__ == "__main__":
@@ -61,7 +116,7 @@ if __name__ == "__main__":
     original_button = tkinter.Button(
         button_frame, text="元画像", command=display_original_image
     )
-    analysis_button = tkinter.Button(button_frame, text="解析")
+    analysis_button = tkinter.Button(button_frame, text="解析", command=display_results)
     original_button.grid(row=0, column=0, padx=5, pady=15, ipadx=5)
     analysis_button.grid(row=0, column=1, padx=5, pady=15, ipadx=5)
 
