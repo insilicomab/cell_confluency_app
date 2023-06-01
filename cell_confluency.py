@@ -27,10 +27,9 @@ def display_original_image():
     # サブウィンドウ
     original_image_window = tkinter.Toplevel(root)
     original_image_window.title("元画像")
-    window_w, window_h = w + 20, h + 20  # サブウィンドウの縦横サイズ
-    original_image_window.geometry(f"{window_w}x{window_h}")
+    original_image_window.geometry(f"{w}x{h}")
     image_label = tkinter.Label(original_image_window, image=photo)
-    image_label.pack(padx=10, pady=10)
+    image_label.pack()
     image_label.image = photo
 
 
