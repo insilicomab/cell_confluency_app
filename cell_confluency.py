@@ -82,7 +82,7 @@ def display_original_image():
 def display_results():
     file_path = file_label.cget("text")
     cc = CellConfluency(file_path)
-    confluency, image_contour, th = cc.run()
+    confluency, image_contour, _ = cc.run()
     print(confluency, image_contour.shape)
     # PillowのImageオブジェクトに変換
     image_contour = Image.fromarray(image_contour)
@@ -90,11 +90,25 @@ def display_results():
     photo = ImageTk.PhotoImage(image_contour)
     # サブウィンドウ
     result_window = tkinter.Toplevel(root)
-    result_window.title("解析後")
-    result_window.geometry(f"{w}x{h}")
-    image_label = tkinter.Label(result_window, image=photo)
+    result_window.title("解析結果")
+    result_window.geometry(f"{w}x{h+50}")
+
+    # フレームの作成
+    result_image_frame = tkinter.Frame(result_window)
+    confluency_frame = tkinter.Frame(result_window)
+    result_image_frame.pack()
+    confluency_frame.pack()
+
+    # 解析結果（画像）の表示
+    image_label = tkinter.Label(result_image_frame, image=photo)
     image_label.pack()
     image_label.image = photo
+
+    # 解析結果（コンフルエンシー）の表示
+    confluency_label = tkinter.Label(
+        confluency_frame, text=f"コンフルエンシー：{confluency:.1f}"
+    )
+    confluency_label.pack(pady=10)
 
 
 if __name__ == "__main__":
@@ -102,7 +116,7 @@ if __name__ == "__main__":
     root = tkinter.Tk()
     root.title("細胞コンフルエンシー算出アプリ")
     root.iconbitmap("cell.ico")
-    root.geometry("500x200")
+    root.geometry("500x160")
     root.resizable(False, False)
 
     # フレームの作成
