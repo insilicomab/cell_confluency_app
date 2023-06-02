@@ -64,7 +64,7 @@ def add_image():
 # 元画像を表示する関数
 def display_original_image():
     file_path = file_label.cget("text")
-    print(file_path)
+
     # 画像の読み込みとサイズ情報の取得
     image = Image.open(file_path)
     w, h = image.size
@@ -83,7 +83,7 @@ def display_results():
     file_path = file_label.cget("text")
     cc = CellConfluency(file_path)
     confluency, image_contour, _ = cc.run()
-    print(confluency, image_contour.shape)
+
     # PillowのImageオブジェクトに変換
     image_contour = Image.fromarray(image_contour)
     w, h = image_contour.size
