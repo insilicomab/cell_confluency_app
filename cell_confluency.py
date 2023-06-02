@@ -54,94 +54,104 @@ class CellConfluency:
         return confluency, image_contour, th
 
 
-# 画像を選択する関数
-def add_image():
-    file_type = [("Image files", "*.jpg; *.jpeg; *.png; *.tif; *.tiff")]  # 画像ファイルを閲覧
-    file_path = tkinter.filedialog.askopenfilename(filetypes=file_type)
-    file_label.configure(text=f"{file_path}")
+class Application(tkinter.Frame):
+    def __init__(self, master=None) -> None:
+        super().__init__(master)
+        # ウィンドウの作成
+        self.pack()
+        self.master.title("細胞コンフルエンシー算出アプリ")
+        self.master.iconbitmap("cell.ico")
+        self.master.geometry("500x160")
+        self.master.resizable(False, False)
 
+        # フレームの作成
+        self.input_frame = tkinter.Frame(self.master)
+        self.filename_frame = tkinter.Frame(self.master)
+        self.button_frame = tkinter.Frame(self.master)
+        self.input_frame.pack()
+        self.filename_frame.pack()
+        self.button_frame.pack()
 
-# 元画像を表示する関数
-def display_original_image():
-    file_path = file_label.cget("text")
-    print(file_path)
-    # 画像の読み込みとサイズ情報の取得
-    image = Image.open(file_path)
-    w, h = image.size
-    photo = ImageTk.PhotoImage(image)
-    # サブウィンドウ
-    original_image_window = tkinter.Toplevel(root)
-    original_image_window.title("元画像")
-    original_image_window.geometry(f"{w}x{h}")
-    image_label = tkinter.Label(original_image_window, image=photo)
-    image_label.pack()
-    image_label.image = photo
+        # ファイル選択ボタン
+        self.add_button = tkinter.Button(
+            self.input_frame, text="ファイル選択", command=self.add_image
+        )
+        self.add_button.grid(pady=15)
 
+        # ファイル名を表示するラベル
+        self.file_label = tkinter.Label(self.filename_frame, text="ファイルが選択されていません")
+        self.file_label.pack(pady=10)
 
-# 解析結果を表示する関数
-def display_results():
-    file_path = file_label.cget("text")
-    cc = CellConfluency(file_path)
-    confluency, image_contour, _ = cc.run()
-    print(confluency, image_contour.shape)
-    # PillowのImageオブジェクトに変換
-    image_contour = Image.fromarray(image_contour)
-    w, h = image_contour.size
-    photo = ImageTk.PhotoImage(image_contour)
-    # サブウィンドウ
-    result_window = tkinter.Toplevel(root)
-    result_window.title("解析結果")
-    result_window.geometry(f"{w}x{h+50}")
+        # 元画像と解析ボタン
+        self.original_button = tkinter.Button(
+            self.button_frame, text="元画像", command=self.display_original_image
+        )
+        self.analysis_button = tkinter.Button(
+            self.button_frame, text="解析", command=self.display_results
+        )
+        self.original_button.grid(row=0, column=0, padx=5, pady=15, ipadx=5)
+        self.analysis_button.grid(row=0, column=1, padx=5, pady=15, ipadx=5)
 
-    # フレームの作成
-    result_image_frame = tkinter.Frame(result_window)
-    confluency_frame = tkinter.Frame(result_window)
-    result_image_frame.pack()
-    confluency_frame.pack()
+    # 画像を選択する関数
+    def add_image(self):
+        file_type = [
+            ("Image files", "*.jpg; *.jpeg; *.png; *.tif; *.tiff")
+        ]  # 画像ファイルを閲覧
+        file_path = tkinter.filedialog.askopenfilename(filetypes=file_type)
+        self.file_label.configure(text=f"{file_path}")
 
-    # 解析結果（画像）の表示
-    image_label = tkinter.Label(result_image_frame, image=photo)
-    image_label.pack()
-    image_label.image = photo
+    # 元画像を表示する関数
+    def display_original_image(self):
+        file_path = self.file_label.cget("text")
 
-    # 解析結果（コンフルエンシー）の表示
-    confluency_label = tkinter.Label(
-        confluency_frame, text=f"コンフルエンシー：{confluency:.1f}"
-    )
-    confluency_label.pack(pady=10)
+        # 画像の読み込みとサイズ情報の取得
+        image = Image.open(file_path)
+        w, h = image.size
+        photo = ImageTk.PhotoImage(image)
+
+        # サブウィンドウ
+        original_image_window = tkinter.Toplevel(root)
+        original_image_window.title("元画像")
+        original_image_window.geometry(f"{w}x{h}")
+        image_label = tkinter.Label(original_image_window, image=photo)
+        image_label.pack()
+        image_label.image = photo
+
+    # 解析結果を表示する関数
+    def display_results(self):
+        file_path = self.file_label.cget("text")
+        cc = CellConfluency(file_path)
+        confluency, image_contour, _ = cc.run()
+
+        # PillowのImageオブジェクトに変換
+        image_contour = Image.fromarray(image_contour)
+        w, h = image_contour.size
+        photo = ImageTk.PhotoImage(image_contour)
+        # サブウィンドウ
+        result_window = tkinter.Toplevel(root)
+        result_window.title("解析結果")
+        result_window.geometry(f"{w}x{h+50}")
+
+        # フレームの作成
+        result_image_frame = tkinter.Frame(result_window)
+        confluency_frame = tkinter.Frame(result_window)
+        result_image_frame.pack()
+        confluency_frame.pack()
+
+        # 解析結果（画像）の表示
+        image_label = tkinter.Label(result_image_frame, image=photo)
+        image_label.pack()
+        image_label.image = photo
+
+        # 解析結果（コンフルエンシー）の表示
+        confluency_label = tkinter.Label(
+            confluency_frame, text=f"コンフルエンシー：{confluency:.1f}"
+        )
+        confluency_label.pack(pady=10)
 
 
 if __name__ == "__main__":
-    # ウィンドウの作成
     root = tkinter.Tk()
-    root.title("細胞コンフルエンシー算出アプリ")
-    root.iconbitmap("cell.ico")
-    root.geometry("500x160")
-    root.resizable(False, False)
-
-    # フレームの作成
-    input_frame = tkinter.Frame(root)
-    filename_frame = tkinter.Frame(root)
-    button_frame = tkinter.Frame(root)
-    input_frame.pack()
-    filename_frame.pack()
-    button_frame.pack()
-
-    # ファイル選択ボタン
-    add_button = tkinter.Button(input_frame, text="ファイル選択", command=add_image)
-    add_button.grid(pady=15)
-
-    # ファイル名を表示するラベル
-    file_label = tkinter.Label(filename_frame, text="ファイルが選択されていません")
-    file_label.pack(pady=10)
-
-    # 元画像と解析ボタン
-    original_button = tkinter.Button(
-        button_frame, text="元画像", command=display_original_image
-    )
-    analysis_button = tkinter.Button(button_frame, text="解析", command=display_results)
-    original_button.grid(row=0, column=0, padx=5, pady=15, ipadx=5)
-    analysis_button.grid(row=0, column=1, padx=5, pady=15, ipadx=5)
-
+    app = Application(master=root)
     # ループ処理の実行
     root.mainloop()
